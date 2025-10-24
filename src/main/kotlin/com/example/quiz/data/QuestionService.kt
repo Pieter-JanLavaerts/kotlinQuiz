@@ -22,7 +22,6 @@ class QuestionService(private val db: QuestionRepository) {
 
     fun getQuestion(id: UUID): Question? {
         val question = db.findById(id).getOrNull()
-        println("Got question from database $question")
         return question?.toDomain()
     }
 
