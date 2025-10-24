@@ -1,0 +1,255 @@
+openapi: 3.0.4
+info:
+  title: Question & Answer API
+  version: 1.0.0
+  description: |
+    REST API for creating and answering questions of multiple types:
+    - Multiple choice (multiple correct answers)
+    - Single choice (one correct answer)
+    - Range (numeric answers within a range)
+
+servers:
+  - url: https://api.example.com/v1
+
+tags:
+  - name: Admin
+    description: Administrative operations (create, edit, delete questions)
+  - name: User
+    description: End-user operations (retrieve questions, answer questions)
+
+paths:
+  /questions:
+    get:
+      summary: Get all questions
+      tags: [User]
+      responses:
+        "200":
+          description: List of available questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestionSummary"
+
+    post:
+      summary: Create a new question
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionCreate"
+      responses:
+        "201":
+          description: Question created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+
+  /questions/{id}:
+    get:
+      summary: Get question details
+      tags: [User]
+      parameters:
+        - $ref: "#/components/parameters/QuestionId"
+      responses:
+        "200":
+          description: Question details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+        "404":
+          description: Question not found
+
+    put:
+      summary: Update a question
+      tags: [Admin]
+      parameters:
+        - $ref: "#/components/parameters/QuestionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionUpdate"
+      responses:
+        "200":
+          description: Question updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+
+    delete:
+      summary: Delete a question
+      tags: [Admin]
+      parameters:
+        - $ref: "#/components/parameters/QuestionId"
+      responses:
+        "204":
+          description: Question deleted successfully
+
+  /questions/{id}/answer:
+    post:
+      summary: Submit an answer for a question
+      tags: [User]
+      parameters:
+        - $ref: "#/components/parameters/QuestionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerRequest"
+      responses:
+        "200":
+          description: Answer evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerResponse"
+        "404":
+          description: Question not found
+
+components:
+  parameters:
+    QuestionId:
+      name: id
+      in: path
+      required: true
+      description: Unique question ID
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    QuestionBase:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        feedback:
+          type: string
+        type:
+          type: string
+          enum: [multiple_choice, single_choice, range]
+
+    QuestionOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        text:
+          type: string
+
+    Question:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            options:
+              type: array
+              items:
+                $ref: "#/components/schemas/QuestionOption"
+              description: For choice questions only
+            correctAnswers:
+              type: array
+              items:
+                type: string
+              description: List of correct option IDs (for choice questions)
+            range:
+              type: object
+              description: For range questions only
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+
+    QuestionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          type: string
+          enum: [multiple_choice, single_choice, range]
+
+    QuestionCreate:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - type: object
+          properties:
+            options:
+              type: array
+              items:
+                type: string
+              description: For choice questions only
+            correctAnswers:
+              type: array
+              items:
+                type: string
+              description: List of correct answers (IDs or strings)
+            range:
+              type: object
+              description: For range questions only
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+          required:
+            - title
+            - description
+            - feedback
+            - type
+
+    QuestionUpdate:
+      allOf:
+        - $ref: "#/components/schemas/QuestionCreate"
+
+    AnswerRequest:
+      type: object
+      properties:
+        multipleChoiceAnswer:
+          type: array
+          items:
+            type: UUID
+          description: For multiple/single choice
+        rangeAnswer:
+          type: number
+          description: For range question
+      required: [answer]
+
+    AnswerResponse:
+      type: object
+      properties:
+        correct:
+          type: boolean
+        feedback:
+          type: string
+        multipleChoiceAnswer:
+          type: array
+          items:
+            type: string
+        rangeAnswer:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+
