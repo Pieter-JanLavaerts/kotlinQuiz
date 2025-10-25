@@ -3,18 +3,13 @@ package com.example.quiz.api
 import com.example.quiz.data.QuestionService
 import com.example.quiz.data.toDTO
 import com.example.quiz.data.toDomain
-import com.example.quiz.model.AnswerRequest
-import com.example.quiz.model.AnswerRequestDTO
-import com.example.quiz.model.AnswerResponseDTO
-import com.example.quiz.model.AnswerResponseRangeAnswerDTO
-import com.example.quiz.model.QuestionCreateDTO
-import com.example.quiz.model.QuestionDTO
-import com.example.quiz.model.QuestionSummaryDTO
-import com.example.quiz.model.QuestionUpdateDTO
+import com.example.quiz.model.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
-import java.util.UUID
+import org.springframework.web.server.ResponseStatusException
+import java.util.*
+
 
 @Component
 class QuestionsApiDelegateImpl(
@@ -36,9 +31,10 @@ class QuestionsApiDelegateImpl(
             val question = questionCreateDTO.toDomain()
             return ResponseEntity.status(HttpStatus.CREATED)
                 .body(questionService.createQuestion(question)?.toDTO())
-        } catch (_: IllegalArgumentException) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(null)
+        } catch (e: IllegalArgumentException) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST, e.message, e
+            )
         }
     }
 
@@ -47,9 +43,10 @@ class QuestionsApiDelegateImpl(
             val question = questionUpdateDTO.toDomain(id)
             return ResponseEntity.status(HttpStatus.OK)
                 .body(questionService.updateQuestion(id, question)?.toDTO())
-        } catch (_: IllegalArgumentException) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(null)
+        } catch (e: IllegalArgumentException) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST, e.message, e
+            )
         }
     }
 

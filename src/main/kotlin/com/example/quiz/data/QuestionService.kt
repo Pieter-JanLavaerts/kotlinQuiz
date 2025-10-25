@@ -21,6 +21,10 @@ class QuestionService(private val db: QuestionRepository) {
     }
 
     fun updateQuestion(id: UUID, question: Question): Question? {
+        val original = db.findById(id)
+        if(original.isEmpty) {
+            throw IllegalArgumentException("Question $id doesn't exist")
+        }
         val saved = db.save(question.toEntity())
         return saved.toDomain()
     }
