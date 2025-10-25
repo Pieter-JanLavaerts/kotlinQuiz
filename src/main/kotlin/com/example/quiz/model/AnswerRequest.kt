@@ -5,5 +5,5 @@ import java.util.UUID
 
 data class AnswerRequest(
     var multipleChoiceAnswers: List<UUID>?,
-    var rangeAnswer: BigDecimal?
+    var rangeAnswer: BigDecimal?,
 )

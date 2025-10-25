@@ -10,7 +10,7 @@ import java.util.UUID
 class QuestionOptionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    val id: UUID?,
+    var id: UUID? = null,
     val text: String,
     val correct: Boolean,
 )

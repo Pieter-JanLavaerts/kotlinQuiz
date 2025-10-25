@@ -5,5 +5,5 @@ import java.util.UUID
 data class QuestionOption(
     val id: UUID,
     val text: String,
-    val correct: Boolean
+    val correct: Boolean,
 )
