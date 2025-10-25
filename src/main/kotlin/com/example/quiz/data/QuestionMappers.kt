@@ -1,13 +1,11 @@
-package com.example.quiz.data.mappers
+package com.example.quiz.data
 
-import com.example.quiz.data.QuestionEntity
-import com.example.quiz.data.QuestionOptionEntity
 import com.example.quiz.model.*
 import java.util.UUID
 
 fun QuestionEntity.toDomain(): Question = when (type) {
     Question.Type.multiple_choice, Question.Type.single_choice ->
-        Question(
+        Question.create(
             id!!,
             title,
             description,
@@ -17,7 +15,7 @@ fun QuestionEntity.toDomain(): Question = when (type) {
             null
         )
     Question.Type.range ->
-        Question(
+        Question.create(
             id!!,
             title,
             description,
@@ -31,34 +29,19 @@ fun QuestionEntity.toDomain(): Question = when (type) {
 fun QuestionOptionEntity.toDomain(): QuestionOption =
     QuestionOption(id!!, text, correct)
 
-fun QuestionCreateDTO.toDomain(): Question = when (type) {
-    QuestionCreateDTO.Type.multiple_choice,
-    QuestionCreateDTO.Type.single_choice -> Question(
-        UUID.randomUUID(), // temporary, not persisted yet
-        title,
-        description,
-        feedback,
-        Question.Type.valueOf(type.toString()),
-        options?.map { text ->
-            QuestionOption(UUID.randomUUID(), text, correctAnswers?.contains(text) == true)
-        } ?: emptyList(),
-        null
-    )
+fun QuestionCreateDTO.toDomain(): Question = Question.create(
+    null,
+    title,
+    description,
+    feedback,
+    Question.Type.valueOf(type.toString()),
+    options?.map { text ->
+        QuestionOption(UUID.randomUUID(), text, correctAnswers?.contains(text) == true)
+    } ?: emptyList(),
+    range?.let { QuestionRange(it.min!!, it.max!!) }
+)
 
-    QuestionCreateDTO.Type.range -> Question(
-        UUID.randomUUID(),
-        title,
-        description,
-        feedback,
-        Question.Type.range,
-        null,
-        range?.let { QuestionRange(it.min!!, it.max!!) }
-    )
-}
-
-fun QuestionUpdateDTO.toDomain(id: UUID): Question = when (type) {
-    QuestionUpdateDTO.Type.multiple_choice,
-    QuestionUpdateDTO.Type.single_choice -> Question(
+fun QuestionUpdateDTO.toDomain(id: UUID): Question = Question.create(
         id,
         title,
         description,
@@ -67,19 +50,8 @@ fun QuestionUpdateDTO.toDomain(id: UUID): Question = when (type) {
         options?.map { text ->
             QuestionOption(UUID.randomUUID(), text, correctAnswers?.contains(text) == true)
         } ?: emptyList(),
-        null
-    )
-
-    QuestionUpdateDTO.Type.range -> Question(
-        id,
-        title,
-        description,
-        feedback,
-        Question.Type.range,
-        null,
         range?.let { QuestionRange(it.min!!, it.max!!) }
     )
-}
 
 fun Question.toEntity(): QuestionEntity = when (type) {
     Question.Type.multiple_choice, Question.Type.single_choice ->
@@ -108,3 +80,20 @@ fun Question.toEntity(): QuestionEntity = when (type) {
             range?.max
         )
 }
+
+fun Question.toDTO(): QuestionDTO = QuestionDTO(
+    title,
+    description,
+    feedback,
+    QuestionDTO.Type.valueOf(type.toString()),
+    id,
+    options?.map { it.toDTO() },
+    options?.filter { it.correct }?.map { it.text },
+    range?.let { QuestionAllOfRangeDTO(it.min, it.max) }
+)
+
+fun QuestionOption.toDTO(): QuestionOptionDTO =
+    QuestionOptionDTO(id, text)
+
+fun QuestionSummary.toDTO(): QuestionSummaryDTO =
+    QuestionSummaryDTO(id, title, QuestionSummaryDTO.Type.valueOf(type.toString()))
